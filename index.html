@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vaquinha do Churrasco da Turma</title>
+  <style>
+    /* ===== CSS RESET & BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      color: #333;
+      line-height: 1.6;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    header {
+      background: #d32f2f;
+      color: white;
+      padding: 2rem;
+      text-align: center;
+    }
+    header h1 {
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+    }
+    header p { font-size: 1.1rem; opacity: 0.9; }
+
+    .main {
+      padding: 2rem;
+    }
+    .menu {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .menu button {
+      padding: 1rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: white;
+      background: #1976d2;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .menu button:hover {
+      background: #1565c0;
+      transform: translateY(-2px);
+    }
+
+    .section {
+      display: none;
+      padding: 1.5rem;
+      background: #f9f9f9;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      border: 1px solid #eee;
+    }
+    .section.active { display: block; }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #444;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    .btn {
+      background: #388e3c;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 0.5rem;
+    }
+    .btn:hover { background: #2e7d32; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background: #f5f5f5;
+      font-weight: 600;
+    }
+    .total {
+      font-weight: bold;
+      font-size: 1.1rem;
+      color: #d32f2f;
+    }
+    .paid { color: #388e3c; }
+    .pending { color: #d32f2f; }
+
+    .summary {
+      background: #e8f5e9;
+      padding: 1.5rem;
+      border-radius: 12px;
+      margin-top: 1.5rem;
+      border-left: 5px solid #4caf50;
+    }
+    .summary h3 { margin-bottom: 1rem; color: #2e7d32; }
+
+    @media (max-width: 600px) {
+      .menu { grid-template-columns: 1fr; }
+      header h1 { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Vaquinha do Churrasco</h1>
+      <p>Organize o churrasco da turma com facilidade!</p>
+    </header>
+
+    <div class="main">
+      <!-- MENU -->
+      <div class="menu">
+        <button onclick="showSection('participantes')">Participantes</button>
+        <button onclick="showSection('calculo')">Calcular Carne</button>
+        <button onclick="showSection('adicionais')">Gastos Adicionais</button>
+        <button onclick="showSection('contribuicoes')">Contribuições</button>
+        <button onclick="showSection('resumo')">Resumo Final</button>
+      </div>
+
+      <!-- PARTICIPANTES -->
+      <div id="participantes" class="section active">
+        <h2>Participantes</h2>
+        <div class="form-group">
+          <label>Nome:</label>
+          <input type="text" id="nomeParticipante" placeholder="Ex: João Silva" />
+        </div>
+        <button class="btn" onclick="adicionarParticipante()">Adicionar</button>
+        <button class="btn" style="background:#d32f2f; margin-left:0.5rem;" onclick="removerParticipante()">Remover</button>
+
+        <table id="tabelaParticipantes">
+          <thead>
+            <tr><th>Nome</th><th>Contribuiu</th><th>Status</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- CÁLCULO DE CARNE -->
+      <div id="calculo" class="section">
+        <h2>Cálculo de Carne</h2>
+        <div class="form-group">
+          <label>Tipo de Churrasco (gramas por pessoa):</label>
+          <select id="tipoChurrasco">
+            <option value="300">Leve (300g)</option>
+            <option value="400" selected>Padrão (400g)</option>
+            <option value="500">Fartura (500g)</option>
+          </select>
+        </div>
+        <p><strong>Total necessário:</strong> <span id="totalCarne">0</span> kg</p>
+        <div class="form-group">
+          <label>Preço do kg da carne (R$):</label>
+          <input type="number" id="precoCarne" step="0.01" placeholder="Ex: 45.90" value="45.90" />
+        </div>
+        <p><strong>Custo total da carne:</strong> R$ <span id="custoCarne">0,00</span></p>
+      </div>
+
+      <!-- GASTOS ADICIONAIS -->
+      <div id="adicionais" class="section">
+        <h2>Gastos Adicionais</h2>
+        <div class="form-group">
+          <label>Carvão (2kg a cada 5 pessoas) - Preço por 2kg:</label>
+          <input type="number" id="precoCarvao" step="0.01" value="15.00" />
+        </div>
+        <div class="form-group">
+          <label>Bebidas (1L por pessoa) - Preço por litro:</label>
+          <input type="number" id="precoBebida" step="0.01" value="5.50" />
+        </div>
+        <div class="form-group">
+          <label>Pão de alho (unidade) - Preço unitário:</label>
+          <input type="number" id="precoPaoAlho" step="0.01" value="3.00" />
+        </div>
+        <div class="form-group">
+          <label>Sal grosso (500g) - Preço por pacote:</label>
+          <input type="number" id="precoSal" step="0.01" value="4.50" />
+        </div>
+        <div class="form-group">
+          <label>Descartáveis (kit) - Preço por kit:</label>
+          <input type="number" id="precoDescartaveis" step="0.01" value="25.00" />
+        </div>
+
+        <div class="summary">
+          <p><strong>Carvão:</strong> <span id="qtdCarvao">0</span> pacotes → R$ <span id="totalCarvao">0,00</span></p>
+          <p><strong>Bebidas:</strong> <span id="qtdBebida">0</span> L → R$ <span id="totalBebida">0,00</span></p>
+          <p><strong>Pão de alho:</strong> <span id="qtdPaoAlho">0</span> un → R$ <span id="totalPaoAlho">0,00</span></p>
+          <p><strong>Sal grosso:</strong> <span id="qtdSal">0</span> pacotes → R$ <span id="totalSal">0,00</span></p>
+          <p><strong>Descartáveis:</strong> <span id="qtdDescartaveis">0</span> kits → R$ <span id="totalDescartaveis">0,00</span></p>
+          <p class="total"><strong>Total Adicionais:</strong> R$ <span id="totalAdicionais">0,00</span></p>
+        </div>
+      </div>
+
+      <!-- CONTRIBUIÇÕES -->
+      <div id="contribuicoes" class="section">
+        <h2>Registrar Contribuição</h2>
+        <div class="form-group">
+          <label>Selecione o participante:</label>
+          <select id="selectContribuinte"></select>
+        </div>
+        <div class="form-group">
+          <label>Valor contribuído (R$):</label>
+          <input type="number" id="valorContribuicao" step="0.01" placeholder="0,00" />
+        </div>
+        <button class="btn" onclick="registrarContribuicao()">Registrar Pagamento</button>
+
+        <h3 style="margin-top:2rem;">Arrecadado: R$ <span id="totalArrecadado">0,00</span></h3>
+      </div>
+
+      <!-- RESUMO FINAL -->
+      <div id="resumo" class="section">
+        <h2>Resumo Completo do Churrasco</h2>
+        <div id="resumoConteudo">
+          <p><em>Clique em "Atualizar Resumo" para ver os detalhes.</em></p>
+        </div>
+        <button class="btn" onclick="gerarResumo()">Atualizar Resumo</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== DADOS GLOBAIS =====
+    const participantes = {}; // { nome: { contribuicao: 0, deve: 0, status: 'pendente' } }
+
+    // ===== FUNÇÕES DE UI =====
+    function showSection(id) {
+      document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      if (id === 'calculo') atualizarCalculoCarne();
+      if (id === 'adicionais') atualizarAdicionais();
+      if (id === 'contribuicoes') atualizarSelectContribuinte();
+      if (id === 'participantes') atualizarTabelaParticipantes();
+    }
+
+    // ===== PARTICIPANTES =====
+    function adicionarParticipante() {
+      const nome = document.getElementById('nomeParticipante').value.trim();
+      if (!nome) return alert('Digite um nome válido!');
+      if (participantes[nome]) return alert('Esta pessoa já foi adicionada!');
+      
+      participantes[nome] = { contribuicao: 0, deve: 0, status: 'pendente' };
+      document.getElementById('nomeParticipante').value = '';
+      atualizarTabelaParticipantes();
+      atualizarSelectContribuinte();
+      atualizarTudo();
+    }
+
+    function removerParticipante() {
+      const nome = prompt('Digite o nome exato da pessoa para remover:');
+      if (nome && participantes[nome]) {
+        delete participantes[nome];
+        atualizarTabelaParticipantes();
+        atualizarSelectContribuinte();
+        atualizarTudo();
+      } else if (nome) {
+        alert('Pessoa não encontrada.');
+      }
+    }
+
+    function atualizarTabelaParticipantes() {
+      const tbody = document.querySelector('#tabelaParticipantes tbody');
+      tbody.innerHTML = '';
+      let totalContribuido = 0;
+      let totalDevido = 0;
+
+      Object.keys(participantes).forEach(nome => {
+        const p = participantes[nome];
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${nome}</td>
+          <td>R$ ${p.contribuicao.toFixed(2)}</td>
+          <td class="${p.status === 'pago' ? 'paid' : 'pending'}">${p.status}</td>
+        `;
+        tbody.appendChild(tr);
+        totalContribuido += p.contribuicao;
+        totalDevido += p.deve;
+      });
+
+      document.getElementById('totalArrecadado').textContent = totalContribuido.toFixed(2);
+    }
+
+    // ===== CÁLCULO DE CARNE =====
+    function atualizarCalculoCarne() {
+      const qtdPessoas = Object.keys(participantes).length;
+      if (qtdPessoas === 0) return;
+
+      const gramasPorPessoa = parseInt(document.getElementById('tipoChurrasco').value);
+      const totalGramas = qtdPessoas * gramasPorPessoa;
+      const totalKg = Math.ceil(totalGramas / 1000);
+
+      document.getElementById('totalCarne').textContent = totalKg;
+
+      const precoKg = parseFloat(document.getElementById('precoCarne').value) || 0;
+      const custoCarne = totalKg * precoKg;
+      document.getElementById('custoCarne').textContent = custoCarne.toFixed(2);
+
+      calcularValorPorPessoa();
+    }
+
+    // ===== GASTOS ADICIONAIS =====
+    function atualizarAdicionais() {
+      const qtdPessoas = Object.keys(participantes).length;
+      if (qtdPessoas === 0) return;
+
+      // Carvão: 2kg a cada 5 pessoas
+      const pacotesCarvao = Math.ceil(qtdPessoas / 5);
+      const precoCarvao = parseFloat(document.getElementById('precoCarvao').value) || 0;
+      const totalCarvao = pacotesCarvao * precoCarvao;
+
+      // Bebidas: 1L por pessoa
+      const totalBebida = qtdPessoas * (parseFloat(document.getElementById('precoBebida').value) || 0);
+
+      // Pão de alho: 1 por pessoa
+      const precoPaoAlho = parseFloat(document.getElementById('precoPaoAlho').value) || 0;
+      const totalPaoAlho = qtdPessoas * precoPaoAlho;
+
+      // Sal grosso: 1 pacote fixo
+      const totalSal = parseFloat(document.getElementById('precoSal').value) || 0;
+
+      // Descartáveis: 1 kit fixo
+      const totalDescartaveis = parseFloat(document.getElementById('precoDescartaveis').value) || 0;
+
+      // Atualiza UI
+      document.getElementById('qtdCarvao').textContent = pacotesCarvao;
+      document.getElementById('totalCarvao').textContent = totalCarvao.toFixed(2);
+
+      document.getElementById('qtdBebida').textContent = qtdPessoas;
+      document.getElementById('totalBebida').textContent = totalBebida.toFixed(2);
+
+      document.getElementById('qtdPaoAlho').textContent = qtdPessoas;
+      document.getElementById('totalPaoAlho').textContent = totalPaoAlho.toFixed(2);
+
+      document.getElementById('qtdSal').textContent = 1;
+      document.getElementById('totalSal').textContent = totalSal.toFixed(2);
+
+      document.getElementById('qtdDescartaveis').textContent = 1;
+      document.getElementById('totalDescartaveis').textContent = totalDescartaveis.toFixed(2);
+
+      const totalAdicionais = totalCarvao + totalBebida + totalPaoAlho + totalSal + totalDescartaveis;
+      document.getElementById('totalAdicionais').textContent = totalAdicionais.toFixed(2);
+
+      calcularValorPorPessoa();
+    }
+
+    // ===== CÁLCULO DO VALOR POR PESSOA =====
+    function calcularValorPorPessoa() {
+      const qtdPessoas = Object.keys(participantes).length;
+      if (qtdPessoas === 0) return;
+
+      // Custo da carne
+      const custoCarne = parseFloat(document.getElementById('custoCarne').textContent) || 0;
+
+      // Custo dos adicionais
+      const totalAdicionais = parseFloat(document.getElementById('totalAdicionais').textContent) || 0;
+
+      const custoTotal = custoCarne + totalAdicionais;
+      const valorPorPessoa = custoTotal / qtdPessoas;
+
+      // Atualiza objeto
+      Object.keys(participantes).forEach(nome => {
+        const p = participantes[nome];
+        p.deve = valorPorPessoa;
+        p.status = p.contribuicao >= valorPorPessoa ? 'pago' : 'pendente';
+      });
+
+      atualizarTabelaParticipantes();
+    }
+
+    // ===== CONTRIBUIÇÕES =====
+    function atualizarSelectContribuinte() {
+      const select = document.getElementById('selectContribuinte');
+      select.innerHTML = '<option value="">Selecione...</option>';
+      Object.keys(participantes).forEach(nome => {
+        const opt = document.createElement('option');
+        opt.value = nome;
+        opt.textContent = `${nome} (deve R$ ${participantes[nome].deve.toFixed(2)})`;
+        select.appendChild(opt);
+      });
+    }
+
+    function registrarContribuicao() {
+      const nome = document.getElementById('selectContribuinte').value;
+      const valor = parseFloat(document.getElementById('valorContribuicao').value) || 0;
+
+      if (!nome || valor <= 0) return alert('Selecione uma pessoa e insira um valor válido.');
+
+      participantes[nome].contribuicao += valor;
+      if (participantes[nome].contribuicao >= participantes[nome].deve) {
+        participantes[nome].status = 'pago';
+      }
+
+      document.getElementById('valorContribuicao').value = '';
+      atualizarTabelaParticipantes();
+      atualizarSelectContribuinte();
+      atualizarTudo();
+    }
+
+    // ===== RESUMO FINAL =====
+    function gerarResumo() {
+      const qtdPessoas = Object.keys(participantes).length;
+      if (qtdPessoas === 0) return alert('Adicione pelo menos um participante!');
+
+      let resumo = `<h3>Resumo do Churrasco - ${qtdPessoas} pessoas</h3>`;
+
+      // Carne
+      const totalKg = document.getElementById('totalCarne').textContent;
+      const custoCarne = document.getElementById('custoCarne').textContent;
+      resumo += `<p><strong>Carne:</strong> ${totalKg} kg → R$ ${custoCarne}</p>`;
+
+      // Adicionais
+      resumo += `<p><strong>Adicionais:</strong> R$ ${document.getElementById('totalAdicionais').textContent}</p>`;
+
+      // Total
+      const totalGeral = (parseFloat(custoCarne) + parseFloat(document.getElementById('totalAdicionais').textContent)).toFixed(2);
+      const valorPorPessoa = (totalGeral / qtdPessoas).toFixed(2);
+      resumo += `<p class="total"><strong>Custo Total:</strong> R$ ${totalGeral}</p>`;
+      resumo += `<p><strong>Valor por pessoa:</strong> R$ ${valorPorPessoa}</p>`;
+
+      // Contribuições
+      let totalArrecadado = 0;
+      let faltamPagar = [];
+      Object.keys(participantes).forEach(nome => {
+        const p = participantes[nome];
+        totalArrecadado += p.contribuicao;
+        if (p.status === 'pendente') {
+          const falta = (p.deve - p.contribuicao).toFixed(2);
+          faltamPagar.push(`${nome} (falta R$ ${falta})`);
+        }
+      });
+
+      resumo += `<p><strong>Arrecadado:</strong> R$ ${totalArrecadado.toFixed(2)}</p>`;
+      if (faltamPagar.length > 0) {
+        resumo += `<p class="pending"><strong>Faltam pagar:</strong> ${faltamPagar.join(', ')}</p>`;
+      } else {
+        resumo += `<p class="paid"><strong>Todos pagaram!</strong> ✅</p>`;
+      }
+
+      document.getElementById('resumoConteudo').innerHTML = resumo;
+    }
+
+    // ===== ATUALIZA TUDO =====
+    function atualizarTudo() {
+      atualizarCalculoCarne();
+      atualizarAdicionais();
+      atualizarTabelaParticipantes();
+      atualizarSelectContribuinte();
+    }
+
+    // Inicializa
+    document.getElementById('tipoChurrasco').addEventListener('change', atualizarCalculoCarne);
+    document.getElementById('precoCarne').addEventListener('input', atualizarCalculoCarne);
+    ['precoCarvao','precoBebida','precoPaoAlho','precoSal','precoDescartaveis'].forEach(id => {
+      document.getElementById(id).addEventListener('input', atualizarAdicionais);
+    });
+  </script>
+</body>
+</html>
